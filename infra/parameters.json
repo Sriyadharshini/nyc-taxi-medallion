@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "value": "dev"
+    },
+    "suffix": {
+      "value": "sri01"
+    },
+    "githubAccountName": {
+      "value": "Sriyadharshini"
+    },
+    "githubRepoName": {
+      "value": "nyc-taxi-medallion"
+    },
+    "githubBranch": {
+      "value": "main"
+    },
+    "sqlAdminUsername": {
+      "value": "sqladmin"
+    },
+    "sqlAdminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/0de422d2-e098-4f74-b8bd-131ec1455c4b/resourceGroups/rg-nyc-taxi-pipeline/providers/Microsoft.KeyVault/vaults/kv-nyc-taxi-sri01"
+        },
+        "secretName": "sql-admin-password"
+      }
+    }
+  }
+}
