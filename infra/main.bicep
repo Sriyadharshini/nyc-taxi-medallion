@@ -144,7 +144,7 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
   }
   properties: {
     autoPauseDelay          : 60      // Auto-pause after 60 min idle — saves cost
-    minCapacity             : '0.5'
+    minCapacity             : 1
     requestedBackupStorageRedundancy: 'Local'
   }
 }

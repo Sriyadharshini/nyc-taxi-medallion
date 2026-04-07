@@ -8,7 +8,7 @@ set -e  # Exit immediately on any error
 
 # ── Config ───────────────────────────────────────────────────
 RESOURCE_GROUP="rg-nyc-taxi-pipeline"
-LOCATION="eastus"
+LOCATION="centralindia"
 TEMPLATE="./main.bicep"
 PARAMS="./parameters.json"
 SQL_PASSWORD="${SQL_ADMIN_PASSWORD}"   # Set this as env variable before running
