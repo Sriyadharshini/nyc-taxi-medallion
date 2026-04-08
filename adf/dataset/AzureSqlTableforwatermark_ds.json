@@ -1,0 +1,72 @@
+{
+	"name": "AzureSqlTableforwatermark_ds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "watermark_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "source_table_name",
+				"type": "varchar"
+			},
+			{
+				"name": "source_schema",
+				"type": "varchar"
+			},
+			{
+				"name": "watermark_column",
+				"type": "varchar"
+			},
+			{
+				"name": "last_watermark_value",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "last_run_status",
+				"type": "varchar"
+			},
+			{
+				"name": "last_run_rows_copied",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "last_run_start_time",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "last_run_end_time",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "pipeline_run_id",
+				"type": "varchar"
+			},
+			{
+				"name": "created_at",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "updated_at",
+				"type": "datetime2",
+				"scale": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "pipeline_watermark"
+		}
+	}
+}
