@@ -1,0 +1,6 @@
+{
+	"name": "shir-local-mysql",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}
