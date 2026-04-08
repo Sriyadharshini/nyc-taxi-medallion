@@ -1,0 +1,22 @@
+{
+	"environment": {
+		"type": "String",
+		"value": "dev"
+	},
+	"storageAccountName": {
+		"type": "String",
+		"value": "stnyctaxisri01"
+	},
+	"bronzeContainer": {
+		"type": "String",
+		"value": "bronze"
+	},
+	"silverContainer": {
+		"type": "String",
+		"value": "silver"
+	},
+	"goldContainer": {
+		"type": "String",
+		"value": "gold"
+	}
+}

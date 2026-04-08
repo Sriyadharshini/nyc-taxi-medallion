@@ -1,0 +1,45 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-nyctaxi-dev-sri01"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"MySql_password": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://stnyctaxisri01.dfs.core.windows.net/"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"value": "https://kv-nyc-taxi-sri01.vault.azure.net/"
+		},
+		"AzureSqlDatabasesourcewatermark_ls_properties_typeProperties_server": {
+			"value": "sql-nyctaxi-dev-sri01.database.windows.net"
+		},
+		"AzureSqlDatabasesourcewatermark_ls_properties_typeProperties_database": {
+			"value": "sqldb-watermark-dev"
+		},
+		"AzureSqlDatabasesourcewatermark_ls_properties_typeProperties_userName": {
+			"value": "sqladmin"
+		},
+		"MySql_properties_typeProperties_server": {
+			"value": "localhost"
+		},
+		"MySql_properties_typeProperties_database": {
+			"value": "nyc_taxi_source"
+		},
+		"MySql_properties_typeProperties_username": {
+			"value": "root"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
