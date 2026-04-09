@@ -281,7 +281,7 @@
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "Set_lLast_Watermark",
+								"activity": "Lookup_watermark",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -299,7 +299,7 @@
 							"source": {
 								"type": "MySqlSource",
 								"query": {
-									"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{variables('v_last_watermark')}'",
+									"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
 									"type": "Expression"
 								}
 							},
@@ -585,27 +585,73 @@
 						}
 					},
 					{
-						"name": "Set_lLast_Watermark",
-						"type": "SetVariable",
+						"name": "Get_New_Watermark",
+						"type": "Lookup",
 						"dependsOn": [
 							{
-								"activity": "Lookup_watermark",
+								"activity": "Copying data from mysql to Azure",
 								"dependencyConditions": [
 									"Succeeded"
 								]
 							}
 						],
 						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
 							"secureOutput": false,
 							"secureInput": false
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"variableName": "v_last_watermark",
-							"value": {
-								"value": "@activity('Lookup_watermark').output.firstRow.last_watermark_value",
-								"type": "Expression"
+							"source": {
+								"type": "MySqlSource",
+								"query": {
+									"value": "SELECT MAX(updated_at) as new_watermark FROM taxi_trips",
+									"type": "Expression"
+								}
+							},
+							"dataset": {
+								"referenceName": "Source_ds_mysql",
+								"type": "DatasetReference",
+								"parameters": {}
 							}
+						}
+					},
+					{
+						"name": "Update_watermark",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Get_New_Watermark",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": {
+										"value": "UPDATE pipeline_watermark \nSET \n      last_watermark_value ='@{activity('Get_New_Watermark').output.firstRow.new_watermark}',\n      last_run_status = 'SUCCESS',\n      last_run_rows_copied= '@{activity('Copying data from mysql to Azure').output.rowsCopied}'\nWHERE source_table_name ='taxi_trips'",
+										"type": "Expression"
+									}
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
 						}
 					}
 				],
@@ -625,7 +671,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/Source_ds_mysql')]",
 				"[concat(variables('factoryId'), '/datasets/Sink_ds_ADLS')]",
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTableforwatermark_ds')]"
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTableforwatermark_ds')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabasesourcewatermark_ls')]"
 			]
 		}
 	]
