@@ -1,0 +1,15 @@
+{
+	"name": "Source_ds_mysql",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "MySql",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "MySqlTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": "`taxi_trips`"
+		}
+	}
+}
