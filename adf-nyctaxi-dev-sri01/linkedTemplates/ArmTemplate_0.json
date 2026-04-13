@@ -88,7 +88,9 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"type": "SelfHosted",
-				"typeProperties": {}
+				"typeProperties": {
+					"selfContainedInteractiveAuthoringEnabled": true
+				}
 			},
 			"dependsOn": []
 		},
@@ -571,7 +573,7 @@
 							"source": {
 								"type": "AzureSqlSource",
 								"sqlReaderQuery": {
-									"value": "SELECT * FROM pipeline_watermark\nWHERE source_table_name = 'taxi_trips'",
+									"value": "SELECT * FROM ingestion_watermark\nWHERE source_table_name = 'taxi_trips'",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
@@ -619,8 +621,8 @@
 						}
 					},
 					{
-						"name": "Update_watermark",
-						"type": "Script",
+						"name": "Ingestion_SP",
+						"type": "SqlServerStoredProcedure",
 						"dependsOn": [
 							{
 								"activity": "Get_New_Watermark",
@@ -637,21 +639,57 @@
 							"secureInput": false
 						},
 						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_update_ingestion_watermark]",
+							"storedProcedureParameters": {
+								"bronze_path": {
+									"value": {
+										"value": "/bronze/taxi_trips/",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"new_watermark_value": {
+									"value": {
+										"value": "@activity('Get_New_Watermark').output.firstRow.new_watermark",
+										"type": "Expression"
+									},
+									"type": "DateTime"
+								},
+								"pipeline_name": {
+									"value": "pl_mysql_to_bronze",
+									"type": "String"
+								},
+								"pipeline_run_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"rows_copied": {
+									"value": {
+										"value": "@activity('Copying data from mysql to Azure').output.rowsCopied",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"source_system": {
+									"value": "mysql",
+									"type": "String"
+								},
+								"source_table": {
+									"value": {
+										"value": "taxi_trips",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
 						"linkedServiceName": {
 							"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 							"type": "LinkedServiceReference"
-						},
-						"typeProperties": {
-							"scripts": [
-								{
-									"type": "Query",
-									"text": {
-										"value": "UPDATE pipeline_watermark \nSET \n      last_watermark_value ='@{activity('Get_New_Watermark').output.firstRow.new_watermark}',\n      last_run_status = 'SUCCESS',\n      last_run_rows_copied= '@{activity('Copying data from mysql to Azure').output.rowsCopied}'\nWHERE source_table_name ='taxi_trips'",
-										"type": "Expression"
-									}
-								}
-							],
-							"scriptBlockExecutionTimeout": "02:00:00"
 						}
 					}
 				],
