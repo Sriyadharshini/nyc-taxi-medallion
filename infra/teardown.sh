@@ -72,7 +72,7 @@ else
   echo "Managed RG not found or already deleted."
 fi
 
-# ── Final ─────────────────────────────────────────────────
+# ── Final ────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}✅ All resources deleted successfully!${NC}"
 echo -e "${YELLOW}You can redeploy anytime using:${NC}"

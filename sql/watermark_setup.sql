@@ -1,4 +1,5 @@
-
+IF OBJECT_ID('ingestion_watermark', 'U') IS NULL
+BEGIN
 CREATE TABLE ingestion_watermark (
     watermark_id           INT IDENTITY(1,1) PRIMARY KEY,
 
@@ -28,22 +29,25 @@ CREATE TABLE ingestion_watermark (
 
 CREATE INDEX idx_ingestion 
 ON ingestion_watermark (source_table_name);
+END
+GO
 
 
 
 
 
-
-
-
-
+IF OBJECT_ID('transformation_watermark', 'U') IS NULL
+BEGIN
 CREATE TABLE transformation_watermark (
     watermark_id            INT IDENTITY(1,1) PRIMARY KEY,
 
     layer_name              VARCHAR(20)   NOT NULL,   -- silver / gold
     source_layer            VARCHAR(20)   NOT NULL,   -- bronze / silver
 
+    source_schema           VARCHAR(50),
     source_table_name       VARCHAR(100)  NOT NULL,
+
+    target_schema           VARCHAR(50),
     target_table_name       VARCHAR(100)  NOT NULL,
 
     watermark_column        VARCHAR(100)  NOT NULL,
@@ -55,18 +59,21 @@ CREATE TABLE transformation_watermark (
     last_run_start_time     DATETIME2     DEFAULT GETUTCDATE(),
     last_run_end_time       DATETIME2,
 
-    job_name                VARCHAR(100),   -- Databricks job
+    job_name                VARCHAR(100),
     job_run_id              VARCHAR(100),
 
     created_at              DATETIME2     DEFAULT GETUTCDATE(),
     updated_at              DATETIME2     DEFAULT GETUTCDATE(),
 
-    CONSTRAINT uq_transformation UNIQUE (layer_name, target_table_name)
+    CONSTRAINT uq_transformation 
+    UNIQUE (layer_name, source_table_name, target_table_name)
 );
 
-CREATE INDEX idx_transformation 
-ON transformation_watermark (target_table_name);
-
+-- Better index for lookup
+CREATE INDEX idx_transformation_lookup 
+ON transformation_watermark (layer_name, target_table_name);
+END
+GO
 
 
 
