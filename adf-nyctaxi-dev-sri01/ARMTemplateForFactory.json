@@ -367,7 +367,7 @@
 						}
 					},
 					{
-						"name": "Get_New_Watermark",
+						"name": "Lookup Config",
 						"type": "Lookup",
 						"dependsOn": [
 							{
@@ -387,89 +387,163 @@
 						"userProperties": [],
 						"typeProperties": {
 							"source": {
-								"type": "MySqlSource",
-								"query": {
-									"value": "SELECT MAX(updated_at) as new_watermark FROM taxi_trips",
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "CREATE TABLE ingestion_validation_config (\n    source_table_name    VARCHAR(100),\n    min_expected_rows    INT,\n    allow_zero_load      BIT DEFAULT 0\n);",
 									"type": "Expression"
-								}
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
 							},
 							"dataset": {
-								"referenceName": "Source_ds_mysql",
+								"referenceName": "AzureSqlTableforwatermark_ds",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						}
 					},
 					{
-						"name": "Ingestion_SP",
-						"type": "SqlServerStoredProcedure",
+						"name": "Validation_Check",
+						"type": "IfCondition",
 						"dependsOn": [
 							{
-								"activity": "Get_New_Watermark",
+								"activity": "Lookup Config",
 								"dependencyConditions": [
 									"Succeeded"
 								]
 							}
 						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
 						"userProperties": [],
 						"typeProperties": {
-							"storedProcedureName": "[[dbo].[usp_update_ingestion_watermark]",
-							"storedProcedureParameters": {
-								"bronze_path": {
-									"value": {
-										"value": "/bronze/taxi_trips/",
-										"type": "Expression"
+							"expression": {
+								"value": "@and(\n    equals(activity('Lookup Config').output.output.firstRow.allow_zero_load, 0),\n    less(\n        activity('Copying data from mysql to Azure').output.rowsCopied,\n        activity('Lookup Config').output.firstRow.min_expected_rows\n    )\n)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Get_New_Watermark",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
 									},
-									"type": "String"
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "MySqlSource",
+											"query": {
+												"value": "SELECT MAX(updated_at) as new_watermark FROM taxi_trips",
+												"type": "Expression"
+											}
+										},
+										"dataset": {
+											"referenceName": "Source_ds_mysql",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
 								},
-								"new_watermark_value": {
-									"value": {
-										"value": "@activity('Get_New_Watermark').output.firstRow.new_watermark",
-										"type": "Expression"
+								{
+									"name": "Ingestion_SP",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Get_New_Watermark",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
 									},
-									"type": "DateTime"
-								},
-								"pipeline_name": {
-									"value": "pl_mysql_to_bronze",
-									"type": "String"
-								},
-								"pipeline_run_id": {
-									"value": {
-										"value": "@pipeline().RunId",
-										"type": "Expression"
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_update_ingestion_watermark]",
+										"storedProcedureParameters": {
+											"bronze_path": {
+												"value": {
+													"value": "/bronze/taxi_trips/",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"new_watermark_value": {
+												"value": {
+													"value": "@activity('Get_New_Watermark').output.firstRow.new_watermark",
+													"type": "Expression"
+												},
+												"type": "DateTime"
+											},
+											"pipeline_name": {
+												"value": "pl_mysql_to_bronze",
+												"type": "String"
+											},
+											"pipeline_run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"rows_copied": {
+												"value": {
+													"value": "@activity('Copying data from mysql to Azure').output.rowsCopied",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"source_system": {
+												"value": "mysql",
+												"type": "String"
+											},
+											"source_table": {
+												"value": {
+													"value": "taxi_trips",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
 									},
-									"type": "String"
-								},
-								"rows_copied": {
-									"value": {
-										"value": "@activity('Copying data from mysql to Azure').output.rowsCopied",
-										"type": "Expression"
-									},
-									"type": "Int32"
-								},
-								"source_system": {
-									"value": "mysql",
-									"type": "String"
-								},
-								"source_table": {
-									"value": {
-										"value": "taxi_trips",
-										"type": "Expression"
-									},
-									"type": "String"
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+										"type": "LinkedServiceReference"
+									}
 								}
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabasesourcewatermark_ls",
-							"type": "LinkedServiceReference"
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Web1",
+									"type": "WebActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "POST",
+										"headers": {},
+										"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
+										"body": {
+											"value": "\n{\n  \"pipeline_name\": \"pl_mysql_to_bronze\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"Validation failed - low row count\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
+											"type": "Expression"
+										}
+									}
+								}
+							]
 						}
 					}
 				],
