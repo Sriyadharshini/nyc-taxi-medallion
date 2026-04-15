@@ -8,11 +8,17 @@
 		"AzureDataLakeStorage1_accountKey": {
 			"value": ""
 		},
+		"AzureDatabricks1_accessToken": {
+			"value": ""
+		},
 		"MySql_password": {
 			"value": ""
 		},
 		"AzureDataLakeStorage1_properties_typeProperties_url": {
 			"value": "https://stnyctaxisri01.dfs.core.windows.net/"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"value": "0415-091349-iodtgexn"
 		},
 		"AzureKeyVault1_properties_typeProperties_baseUrl": {
 			"value": "https://kv-nyc-taxi-sri01.vault.azure.net/"
