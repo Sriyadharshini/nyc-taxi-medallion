@@ -375,9 +375,20 @@
 							"typeProperties": {
 								"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
 								"storedProcedureParameters": {
-									"error_message": {
+									"data_path": {
 										"value": {
-											"value": "No incremental data found",
+											"value": "@pipeline().parameters.bronze_path",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"error_message": {
+										"value": "No Incremental data found",
+										"type": "String"
+									},
+									"layer_name": {
+										"value": {
+											"value": "@pipeline().parameters.layer_name",
 											"type": "Expression"
 										},
 										"type": "String"
@@ -405,10 +416,7 @@
 										"type": "String"
 									},
 									"status": {
-										"value": {
-											"value": "SUCCESS",
-											"type": "Expression"
-										},
+										"value": "SUCCESS",
 										"type": "String"
 									}
 								}
@@ -468,9 +476,16 @@
 							"typeProperties": {
 								"storedProcedureName": "[dbo].[usp_update_ingestion_watermark]",
 								"storedProcedureParameters": {
-									"bronze_path": {
+									"data_path": {
 										"value": {
-											"value": "/bronze/taxi_trips/",
+											"value": "@pipeline().parameters.bronze_path",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"layer_name": {
+										"value": {
+											"value": "@pipeline().parameters.layer_name",
 											"type": "Expression"
 										},
 										"type": "String"
@@ -483,7 +498,10 @@
 										"type": "DateTime"
 									},
 									"pipeline_name": {
-										"value": "pl_mysql_to_bronze",
+										"value": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										},
 										"type": "String"
 									},
 									"pipeline_run_id": {
@@ -493,7 +511,7 @@
 										},
 										"type": "String"
 									},
-									"rows_copied": {
+									"rows_processed": {
 										"value": {
 											"value": "@activity('Copying data from mysql to Azure').output.rowsCopied",
 											"type": "Expression"
@@ -505,10 +523,7 @@
 										"type": "String"
 									},
 									"source_table": {
-										"value": {
-											"value": "taxi_trips",
-											"type": "Expression"
-										},
+										"value": "taxi_trips",
 										"type": "String"
 									}
 								}
@@ -543,15 +558,32 @@
 				"typeProperties": {
 					"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
 					"storedProcedureParameters": {
+						"data_path": {
+							"value": {
+								"value": "@pipeline().parameters.bronze_path",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
 						"error_message": {
 							"value": {
-								"value": "@activity('Copying data from mysql to Azure').output.error.message",
+								"value": "@activity('Copying data from mysql to Azure').error.message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"layer_name": {
+							"value": {
+								"value": "@pipeline().parameters.layer_name",
 								"type": "Expression"
 							},
 							"type": "String"
 						},
 						"pipeline_name": {
-							"value": "@pipeline().Pipeline",
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
 							"type": "String"
 						},
 						"pipeline_run_id": {
@@ -570,7 +602,7 @@
 							"type": "String"
 						},
 						"status": {
-							"value": "Failed",
+							"value": "FAILED",
 							"type": "String"
 						}
 					}
@@ -609,6 +641,16 @@
 				}
 			}
 		],
+		"parameters": {
+			"bronze_path": {
+				"type": "string",
+				"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
+			},
+			"layer_name": {
+				"type": "string",
+				"defaultValue": "bronze"
+			}
+		},
 		"variables": {
 			"v_last_watermark": {
 				"type": "String"
