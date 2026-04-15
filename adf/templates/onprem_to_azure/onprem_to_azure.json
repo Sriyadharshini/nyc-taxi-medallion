@@ -1,0 +1,771 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name"
+		},
+		"AzureSqlDatabasesourcewatermark_ls": {
+			"type": "string"
+		},
+		"MySql": {
+			"type": "string"
+		},
+		"AzureDataLakeStorage1": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/onprem_to_azure')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copying data from mysql to Azure",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Lookup_watermark",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "MySqlSource",
+								"query": {
+									"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
+									"type": "Expression"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "trip_id",
+											"type": "Int32",
+											"physicalType": "Int32"
+										},
+										"sink": {
+											"name": "trip_id",
+											"type": "Int32",
+											"physicalType": "INT_32"
+										}
+									},
+									{
+										"source": {
+											"name": "vendor_id",
+											"type": "String",
+											"physicalType": "VarChar"
+										},
+										"sink": {
+											"name": "vendor_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "pickup_datetime",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										},
+										"sink": {
+											"name": "pickup_datetime",
+											"type": "DateTime",
+											"physicalType": "INT_96"
+										}
+									},
+									{
+										"source": {
+											"name": "dropoff_datetime",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										},
+										"sink": {
+											"name": "dropoff_datetime",
+											"type": "DateTime",
+											"physicalType": "INT_96"
+										}
+									},
+									{
+										"source": {
+											"name": "passenger_count",
+											"type": "SByte",
+											"physicalType": "Byte"
+										},
+										"sink": {
+											"name": "passenger_count",
+											"type": "SByte",
+											"physicalType": "INT_8"
+										}
+									},
+									{
+										"source": {
+											"name": "trip_distance",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "trip_distance",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "pickup_longitude",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "pickup_longitude",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "pickup_latitude",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "pickup_latitude",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "dropoff_longitude",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "dropoff_longitude",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "dropoff_latitude",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "dropoff_latitude",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "payment_type",
+											"type": "String",
+											"physicalType": "VarChar"
+										},
+										"sink": {
+											"name": "payment_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "fare_amount",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "fare_amount",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "tip_amount",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "tip_amount",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "total_amount",
+											"type": "Decimal",
+											"physicalType": "NewDecimal"
+										},
+										"sink": {
+											"name": "total_amount",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "rate_code",
+											"type": "String",
+											"physicalType": "VarChar"
+										},
+										"sink": {
+											"name": "rate_code",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "store_fwd_flag",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "store_fwd_flag",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										},
+										"sink": {
+											"name": "updated_at",
+											"type": "DateTime",
+											"physicalType": "INT_96"
+										}
+									},
+									{
+										"source": {
+											"name": "created_at",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										},
+										"sink": {
+											"name": "created_at",
+											"type": "DateTime",
+											"physicalType": "INT_96"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Source_ds_mysql",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Sink_ds_ADLS",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Lookup_watermark",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "SELECT * FROM ingestion_watermark\nWHERE source_table_name = 'taxi_trips'",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlTableforwatermark_ds",
+								"type": "DatasetReference"
+							}
+						}
+					},
+					{
+						"name": "Lookup Config",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Copying data from mysql to Azure",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "SELECT min_expected_rows, allow_zero_load  \nFROM ingestion_validation_config  \nWHERE source_table_name = 'taxi_trips'",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlTableforwatermark_ds",
+								"type": "DatasetReference"
+							}
+						}
+					},
+					{
+						"name": "Data_processing_Log_Error_SP",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Lookup Config",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('Copying data from mysql to Azure').output.rowsCopied,0)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "SP_audit_log_No_data_copied",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_log_pipeline_execution]",
+										"storedProcedureParameters": {
+											"error_message": {
+												"value": {
+													"value": "No incremental data found",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_name": {
+												"value": {
+													"value": "@pipeline().Pipeline",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"rows_processed": {
+												"value": "0",
+												"type": "Int32"
+											},
+											"source_table": {
+												"value": "taxi_trips",
+												"type": "String"
+											},
+											"status": {
+												"value": {
+													"value": "SUCCESS",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "[parameters('AzureSqlDatabasesourcewatermark_ls')]",
+										"type": "LinkedServiceReference"
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Get_New_Watermark",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "MySqlSource",
+											"query": {
+												"value": "SELECT MAX(updated_at) as new_watermark FROM taxi_trips",
+												"type": "Expression"
+											}
+										},
+										"dataset": {
+											"referenceName": "Source_ds_mysql",
+											"type": "DatasetReference"
+										}
+									}
+								},
+								{
+									"name": "Ingestion_SP",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Get_New_Watermark",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_update_ingestion_watermark]",
+										"storedProcedureParameters": {
+											"bronze_path": {
+												"value": {
+													"value": "/bronze/taxi_trips/",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"new_watermark_value": {
+												"value": {
+													"value": "@activity('Get_New_Watermark').output.firstRow.new_watermark",
+													"type": "Expression"
+												},
+												"type": "DateTime"
+											},
+											"pipeline_name": {
+												"value": "pl_mysql_to_bronze",
+												"type": "String"
+											},
+											"pipeline_run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"rows_copied": {
+												"value": {
+													"value": "@activity('Copying data from mysql to Azure').output.rowsCopied",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"source_system": {
+												"value": "mysql",
+												"type": "String"
+											},
+											"source_table": {
+												"value": {
+													"value": "taxi_trips",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "[parameters('AzureSqlDatabasesourcewatermark_ls')]",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Copy_activity_failure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copying data from mysql to Azure",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_log_pipeline_execution]",
+							"storedProcedureParameters": {
+								"error_message": {
+									"value": {
+										"value": "@activity('Copying data from mysql to Azure').output.error.message",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"pipeline_name": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"pipeline_run_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"rows_processed": {
+									"value": "0",
+									"type": "Int32"
+								},
+								"source_table": {
+									"value": "taxi_trips",
+									"type": "String"
+								},
+								"status": {
+									"value": "Failed",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "[parameters('AzureSqlDatabasesourcewatermark_ls')]",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Web_activity_email_Trigger_failure",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Copy_activity_failure",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
+							"body": {
+								"value": "\n{\n  \"pipeline_name\": \"pl_mysql_to_bronze\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"Validation failed - low row count\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"variables": {
+					"v_last_watermark": {
+						"type": "String"
+					},
+					"v_last_watermark_column": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Source_ds_mysql')]",
+				"[concat(variables('factoryId'), '/datasets/Sink_ds_ADLS')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTableforwatermark_ds')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Source_ds_mysql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('MySql')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "MySqlTable",
+				"schema": [],
+				"typeProperties": {
+					"tableName": "`taxi_trips`"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Sink_ds_ADLS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureDataLakeStorage1')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "bronze"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTableforwatermark_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('AzureSqlDatabasesourcewatermark_ls')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "watermark_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "source_table_name",
+						"type": "varchar"
+					},
+					{
+						"name": "source_schema",
+						"type": "varchar"
+					},
+					{
+						"name": "watermark_column",
+						"type": "varchar"
+					},
+					{
+						"name": "last_watermark_value",
+						"type": "datetime2",
+						"scale": 7
+					},
+					{
+						"name": "last_run_status",
+						"type": "varchar"
+					},
+					{
+						"name": "last_run_rows_copied",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "last_run_start_time",
+						"type": "datetime2",
+						"scale": 7
+					},
+					{
+						"name": "last_run_end_time",
+						"type": "datetime2",
+						"scale": 7
+					},
+					{
+						"name": "pipeline_run_id",
+						"type": "varchar"
+					},
+					{
+						"name": "created_at",
+						"type": "datetime2",
+						"scale": 7
+					},
+					{
+						"name": "updated_at",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "pipeline_watermark"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
