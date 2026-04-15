@@ -495,6 +495,65 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "Copy_activity_failure",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copying data from mysql to Azure",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+					"storedProcedureParameters": {
+						"error_message": {
+							"value": {
+								"value": "@activity('Copying data from mysql to Azure').output.error.message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"pipeline_name": {
+							"value": "@pipeline().Pipeline",
+							"type": "String"
+						},
+						"pipeline_run_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"rows_processed": {
+							"value": "0",
+							"type": "Int32"
+						},
+						"source_table": {
+							"value": "taxi_trips",
+							"type": "String"
+						},
+						"status": {
+							"value": "Failed",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+					"type": "LinkedServiceReference"
+				}
 			}
 		],
 		"variables": {
