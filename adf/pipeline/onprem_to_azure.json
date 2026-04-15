@@ -343,41 +343,6 @@
 				}
 			},
 			{
-				"name": "Validation_Check",
-				"type": "IfCondition",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"expression": {
-						"value": "@and(\n    equals(activity('Lookup Config').output.firstRow.allow_zero_load, false),\n    less(\n        activity('Copying data from mysql to Azure').output.rowsCopied,\n        activity('Lookup Config').output.firstRow.min_expected_rows\n    )\n)",
-						"type": "Expression"
-					},
-					"ifTrueActivities": [
-						{
-							"name": "Web_activity_email_Trigger_failure",
-							"type": "WebActivity",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"method": "POST",
-								"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
-								"body": {
-									"value": "\n{\n  \"pipeline_name\": \"pl_mysql_to_bronze\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"Validation failed - low row count\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
-									"type": "Expression"
-								}
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "Data_processing_Log_Error_SP",
 				"type": "IfCondition",
 				"dependsOn": [
@@ -391,9 +356,69 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@activity('Copying data from mysql to Azure').output.rowsCopied > 0",
+						"value": "@greater(activity('Copying data from mysql to Azure').output.rowsCopied,0)",
 						"type": "Expression"
 					},
+					"ifFalseActivities": [
+						{
+							"name": "SP_audit_log_No_data_copied",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+								"storedProcedureParameters": {
+									"error_message": {
+										"value": {
+											"value": "No incremental data found",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"pipeline_name": {
+										"value": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"pipeline_run_id": {
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"rows_processed": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"source_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									},
+									"status": {
+										"value": {
+											"value": "SUCCESS",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
 					"ifTrueActivities": [
 						{
 							"name": "Get_New_Watermark",
@@ -553,6 +578,34 @@
 				"linkedServiceName": {
 					"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Web_activity_email_Trigger_failure",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Copy_activity_failure",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
+					"body": {
+						"value": "\n{\n  \"pipeline_name\": \"pl_mysql_to_bronze\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"Validation failed - low row count\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
+						"type": "Expression"
+					}
 				}
 			}
 		],
