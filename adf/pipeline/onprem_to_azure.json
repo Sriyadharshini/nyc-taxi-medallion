@@ -3,283 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copying data from mysql to Azure",
-				"type": "Copy",
-				"dependsOn": [
-					{
-						"activity": "Get_Row_Count",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "MySqlSource",
-						"query": {
-							"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
-							"type": "Expression"
-						}
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"name": "trip_id",
-									"type": "Int32",
-									"physicalType": "Int32"
-								},
-								"sink": {
-									"name": "trip_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "vendor_id",
-									"type": "String",
-									"physicalType": "VarChar"
-								},
-								"sink": {
-									"name": "vendor_id",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pickup_datetime",
-									"type": "DateTime",
-									"physicalType": "DateTime"
-								},
-								"sink": {
-									"name": "pickup_datetime",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							},
-							{
-								"source": {
-									"name": "dropoff_datetime",
-									"type": "DateTime",
-									"physicalType": "DateTime"
-								},
-								"sink": {
-									"name": "dropoff_datetime",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							},
-							{
-								"source": {
-									"name": "passenger_count",
-									"type": "SByte",
-									"physicalType": "Byte"
-								},
-								"sink": {
-									"name": "passenger_count",
-									"type": "SByte",
-									"physicalType": "INT_8"
-								}
-							},
-							{
-								"source": {
-									"name": "trip_distance",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "trip_distance",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "pickup_longitude",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "pickup_longitude",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "pickup_latitude",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "pickup_latitude",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "dropoff_longitude",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "dropoff_longitude",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "dropoff_latitude",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "dropoff_latitude",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "payment_type",
-									"type": "String",
-									"physicalType": "VarChar"
-								},
-								"sink": {
-									"name": "payment_type",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "fare_amount",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "fare_amount",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "tip_amount",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "tip_amount",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "total_amount",
-									"type": "Decimal",
-									"physicalType": "NewDecimal"
-								},
-								"sink": {
-									"name": "total_amount",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "rate_code",
-									"type": "String",
-									"physicalType": "VarChar"
-								},
-								"sink": {
-									"name": "rate_code",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "store_fwd_flag",
-									"type": "String",
-									"physicalType": "String"
-								},
-								"sink": {
-									"name": "store_fwd_flag",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "updated_at",
-									"type": "DateTime",
-									"physicalType": "DateTime"
-								},
-								"sink": {
-									"name": "updated_at",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							},
-							{
-								"source": {
-									"name": "created_at",
-									"type": "DateTime",
-									"physicalType": "DateTime"
-								},
-								"sink": {
-									"name": "created_at",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							}
-						],
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "Source_ds_mysql",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "Sink_ds_ADLS",
-						"type": "DatasetReference"
-					}
-				]
-			},
-			{
 				"name": "Lookup_watermark",
 				"type": "Lookup",
 				"dependsOn": [],
@@ -312,7 +35,7 @@
 				"type": "Lookup",
 				"dependsOn": [
 					{
-						"activity": "Copying data from mysql to Azure",
+						"activity": "Get_Row_Count",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -356,12 +79,12 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('Copying data from mysql to Azure').output.rowsCopied,0)",
+						"value": "@greater(activity('Get_Row_Count').output.firstRow.row_count,0)",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
 						{
-							"name": "SP_audit_log_No_data_copied",
+							"name": "SP_Bronze_Log_No_Data",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [],
 							"policy": {
@@ -416,79 +139,7 @@
 										"type": "String"
 									},
 									"status": {
-										"value": "SUCCESS",
-										"type": "String"
-									}
-								}
-							},
-							"linkedServiceName": {
-								"referenceName": "AzureSqlDatabasesourcewatermark_ls",
-								"type": "LinkedServiceReference"
-							}
-						},
-						{
-							"name": "SP_Success_log",
-							"type": "SqlServerStoredProcedure",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
-								"storedProcedureParameters": {
-									"data_path": {
-										"value": "",
-										"type": "String"
-									},
-									"error_message": {
-										"value": "",
-										"type": "String"
-									},
-									"layer_name": {
-										"value": {
-											"value": "@pipeline().parameters.layer_name",
-											"type": "Expression"
-										},
-										"type": "String"
-									},
-									"pipeline_name": {
-										"value": {
-											"value": "@pipeline().Pipeline",
-											"type": "Expression"
-										},
-										"type": "String"
-									},
-									"pipeline_run_id": {
-										"value": {
-											"value": "@pipeline().RunId",
-											"type": "Expression"
-										},
-										"type": "String"
-									},
-									"rows_processed": {
-										"value": {
-											"value": "@activity('Copying data from mysql to Azure').output",
-											"type": "Expression"
-										},
-										"type": "Int32"
-									},
-									"source_table": {
-										"value": {
-											"value": "taxi_trips",
-											"type": "Expression"
-										},
-										"type": "String"
-									},
-									"status": {
-										"value": {
-											"value": "SUCCESS",
-											"type": "Expression"
-										},
+										"value": "NO_DATA",
 										"type": "String"
 									}
 								}
@@ -503,7 +154,14 @@
 						{
 							"name": "Get_New_Watermark",
 							"type": "Lookup",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "Copying data from mysql to Azure",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -527,7 +185,7 @@
 							}
 						},
 						{
-							"name": "Ingestion_SP",
+							"name": "SP_Bronze_Ingestion_Watermark",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [
 								{
@@ -585,7 +243,7 @@
 									},
 									"rows_processed": {
 										"value": {
-											"value": "@activity('Copying data from mysql to Azure').output.rowsCopied",
+											"value": "@activity('Get_Row_Count').output.firstRow.row_count",
 											"type": "Expression"
 										},
 										"type": "Int32"
@@ -606,11 +264,11 @@
 							}
 						},
 						{
-							"name": "Copy_activity_failure",
+							"name": "SP_Bronze_log_Success",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [
 								{
-									"activity": "Ingestion_SP",
+									"activity": "SP_Bronze_Ingestion_Watermark",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -635,10 +293,7 @@
 										"type": "String"
 									},
 									"error_message": {
-										"value": {
-											"value": "@activity('Copying data from mysql to Azure').error.message",
-											"type": "Expression"
-										},
+										"value": null,
 										"type": "String"
 									},
 									"layer_name": {
@@ -663,7 +318,10 @@
 										"type": "String"
 									},
 									"rows_processed": {
-										"value": "0",
+										"value": {
+											"value": "@activity('Get_Row_Count').output.firstRow.row_count",
+											"type": "Expression"
+										},
 										"type": "Int32"
 									},
 									"source_table": {
@@ -671,7 +329,7 @@
 										"type": "String"
 									},
 									"status": {
-										"value": "FAILED",
+										"value": "SUCCESS",
 										"type": "String"
 									}
 								}
@@ -680,6 +338,276 @@
 								"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 								"type": "LinkedServiceReference"
 							}
+						},
+						{
+							"name": "Copying data from mysql to Azure",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "MySqlSource",
+									"query": {
+										"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
+										"type": "Expression"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "trip_id",
+												"type": "Int32",
+												"physicalType": "Int32"
+											},
+											"sink": {
+												"name": "trip_id",
+												"type": "Int32",
+												"physicalType": "INT_32"
+											}
+										},
+										{
+											"source": {
+												"name": "vendor_id",
+												"type": "String",
+												"physicalType": "VarChar"
+											},
+											"sink": {
+												"name": "vendor_id",
+												"type": "String",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "pickup_datetime",
+												"type": "DateTime",
+												"physicalType": "DateTime"
+											},
+											"sink": {
+												"name": "pickup_datetime",
+												"type": "DateTime",
+												"physicalType": "INT_96"
+											}
+										},
+										{
+											"source": {
+												"name": "dropoff_datetime",
+												"type": "DateTime",
+												"physicalType": "DateTime"
+											},
+											"sink": {
+												"name": "dropoff_datetime",
+												"type": "DateTime",
+												"physicalType": "INT_96"
+											}
+										},
+										{
+											"source": {
+												"name": "passenger_count",
+												"type": "SByte",
+												"physicalType": "Byte"
+											},
+											"sink": {
+												"name": "passenger_count",
+												"type": "SByte",
+												"physicalType": "INT_8"
+											}
+										},
+										{
+											"source": {
+												"name": "trip_distance",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "trip_distance",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "pickup_longitude",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "pickup_longitude",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "pickup_latitude",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "pickup_latitude",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "dropoff_longitude",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "dropoff_longitude",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "dropoff_latitude",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "dropoff_latitude",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "payment_type",
+												"type": "String",
+												"physicalType": "VarChar"
+											},
+											"sink": {
+												"name": "payment_type",
+												"type": "String",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "fare_amount",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "fare_amount",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "tip_amount",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "tip_amount",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "total_amount",
+												"type": "Decimal",
+												"physicalType": "NewDecimal"
+											},
+											"sink": {
+												"name": "total_amount",
+												"type": "Decimal",
+												"physicalType": "DECIMAL"
+											}
+										},
+										{
+											"source": {
+												"name": "rate_code",
+												"type": "String",
+												"physicalType": "VarChar"
+											},
+											"sink": {
+												"name": "rate_code",
+												"type": "String",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "store_fwd_flag",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "store_fwd_flag",
+												"type": "String",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "updated_at",
+												"type": "DateTime",
+												"physicalType": "DateTime"
+											},
+											"sink": {
+												"name": "updated_at",
+												"type": "DateTime",
+												"physicalType": "INT_96"
+											}
+										},
+										{
+											"source": {
+												"name": "created_at",
+												"type": "DateTime",
+												"physicalType": "DateTime"
+											},
+											"sink": {
+												"name": "created_at",
+												"type": "DateTime",
+												"physicalType": "INT_96"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Source_ds_mysql",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Sink_ds_ADLS",
+									"type": "DatasetReference"
+								}
+							]
 						}
 					]
 				}
@@ -687,14 +615,7 @@
 			{
 				"name": "Web_activity_email_Trigger_failure",
 				"type": "WebActivity",
-				"dependsOn": [
-					{
-						"activity": "Copying data from mysql to Azure",
-						"dependencyConditions": [
-							"Failed"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,

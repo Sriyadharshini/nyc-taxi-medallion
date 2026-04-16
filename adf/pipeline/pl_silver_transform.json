@@ -62,7 +62,7 @@
 					},
 					"ifFalseActivities": [
 						{
-							"name": "SP_Watermark_Update",
+							"name": "SP_Silver_Watermark_Update",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [],
 							"policy": {
@@ -133,7 +133,7 @@
 					],
 					"ifTrueActivities": [
 						{
-							"name": "SP_No_Data_log",
+							"name": "SP_Silver_No_Data_log",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [],
 							"policy": {
