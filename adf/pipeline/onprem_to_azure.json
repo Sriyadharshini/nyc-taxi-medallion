@@ -355,7 +355,7 @@
 								"source": {
 									"type": "MySqlSource",
 									"query": {
-										"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
+										"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow}'",
 										"type": "Expression"
 									}
 								},
@@ -635,7 +635,7 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "SELECT COUNT(*) AS row_count\nfrom taxi_trips\nwhere updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
+							"value": "SELECT COUNT(*) AS row_count\nfrom taxi_trips\nwhere updated_at > '@{activity('Lookup_watermark').output.firstRow}'",
 							"type": "Expression"
 						}
 					},

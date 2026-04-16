@@ -138,7 +138,7 @@
 				}
 			},
 			{
-				"name": "SP_failure_bronze_copy1",
+				"name": "SP_failure_silver",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [
 					{
