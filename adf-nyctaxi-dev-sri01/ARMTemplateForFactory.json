@@ -202,7 +202,7 @@
 						}
 					},
 					{
-						"name": "SP_failure_bronze_copy1",
+						"name": "SP_failure_silver",
 						"type": "SqlServerStoredProcedure",
 						"dependsOn": [
 							{
@@ -301,7 +301,7 @@
 							"headers": {},
 							"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
 							"body": {
-								"value": "\n{\n  \"pipeline_name\": \"@{pipeline().Pipeline}\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"@{activity('run_bronze_pipeline').error.message}\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
+								"value": "@json(concat(\n'{',\n'\"pipeline_name\":\"', pipeline().Pipeline, '\",',\n'\"table_name\":\"taxi_trips\",',\n'\"error_message\":\"', \nreplace(replace(replace(string(coalesce(activity('run_bronze_pipeline').error.message,'Unknown error')),'\"',''),'{',''),'}',''),\n'\",',\n'\"run_id\":\"', pipeline().RunId, '\"',\n'}'\n))",
 								"type": "Expression"
 							}
 						}
@@ -694,7 +694,7 @@
 										"source": {
 											"type": "MySqlSource",
 											"query": {
-												"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
+												"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow}'",
 												"type": "Expression"
 											}
 										},
