@@ -3,15 +3,15 @@ BEGIN
 CREATE TABLE ingestion_watermark (
     watermark_id           INT IDENTITY(1,1) PRIMARY KEY,
 
-    source_system          VARCHAR(50)   NOT NULL,   -- mysql / api
+    source_system          VARCHAR(50)   NOT NULL,
     source_schema          VARCHAR(50),
     source_table_name      VARCHAR(100)  NOT NULL,
 
-    watermark_column       VARCHAR(100)  NOT NULL,   -- updated_at
+    watermark_column       VARCHAR(100)  NOT NULL,
     last_watermark_value   DATETIME2     NOT NULL,
 
     last_run_status        VARCHAR(20)   DEFAULT 'SUCCESS',
-    last_run_rows_copied   INT           DEFAULT 0,
+    last_run_rows_processed INT          DEFAULT 0,   -- 🔥 renamed
 
     last_run_start_time    DATETIME2     DEFAULT GETUTCDATE(),
     last_run_end_time      DATETIME2,
@@ -19,7 +19,7 @@ CREATE TABLE ingestion_watermark (
     pipeline_name          VARCHAR(100),
     pipeline_run_id        VARCHAR(100),
 
-    bronze_path            VARCHAR(500),
+    data_path              VARCHAR(500),  -- 🔥 generic
 
     created_at             DATETIME2     DEFAULT GETUTCDATE(),
     updated_at             DATETIME2     DEFAULT GETUTCDATE(),
@@ -33,6 +33,22 @@ END
 GO
 
 
+INSERT INTO ingestion_watermark (
+    source_system,
+    source_schema,
+    source_table_name,
+    watermark_column,
+    last_watermark_value,
+    last_run_status
+)
+VALUES (
+    'mysql',
+    'nyc_taxi_source',
+    'taxi_trips',
+    'updated_at',
+    '2024-01-01 00:00:00',
+    'INIT'
+);
 
 
 
@@ -62,6 +78,8 @@ CREATE TABLE transformation_watermark (
     job_name                VARCHAR(100),
     job_run_id              VARCHAR(100),
 
+    data_path               VARCHAR(500),   -- 🔥 NEW (important)
+
     created_at              DATETIME2     DEFAULT GETUTCDATE(),
     updated_at              DATETIME2     DEFAULT GETUTCDATE(),
 
@@ -69,7 +87,6 @@ CREATE TABLE transformation_watermark (
     UNIQUE (layer_name, source_table_name, target_table_name)
 );
 
--- Better index for lookup
 CREATE INDEX idx_transformation_lookup 
 ON transformation_watermark (layer_name, target_table_name);
 END
@@ -78,78 +95,17 @@ GO
 
 
 
-
-
-
-
-
-
-
-CREATE TABLE pipeline_audit_log (
-    log_id             INT IDENTITY(1,1) PRIMARY KEY,
-
-    pipeline_name      VARCHAR(100),
-    pipeline_run_id    VARCHAR(100),
-
-    layer_name         VARCHAR(20),   -- bronze / silver / gold
-
-    source_table       VARCHAR(100),
-    target_table       VARCHAR(100),
-
-    watermark_start    DATETIME2,
-    watermark_end      DATETIME2,
-
-    rows_processed     INT DEFAULT 0,
-
-    status             VARCHAR(20),
-    error_message      VARCHAR(MAX),
-
-    data_path          VARCHAR(500),
-
-    run_start_time     DATETIME2 DEFAULT GETUTCDATE(),
-    run_end_time       DATETIME2,
-
-    duration_seconds   AS DATEDIFF(SECOND, run_start_time, run_end_time)
-);
-
-
-INSERT INTO ingestion_watermark (
-    source_system,
-    source_schema,
-    source_table_name,
-    watermark_column,
-    last_watermark_value,
-    last_run_status
-)
-VALUES (
-    'mysql',
-    'nyc_taxi_source',
-    'taxi_trips',
-    'updated_at',
-    '2024-01-01 00:00:00',
-    'INIT'
-);
-
-
-
-
-
-
-
-
-
-
-
-
-
 CREATE OR ALTER PROCEDURE usp_update_ingestion_watermark
+(
     @source_system        VARCHAR(50),
     @source_table         VARCHAR(100),
+    @layer_name           VARCHAR(20),   -- 🔥 NEW (bronze/silver/gold)
     @new_watermark_value  DATETIME2,
     @pipeline_name        VARCHAR(100),
     @pipeline_run_id      VARCHAR(100),
-    @rows_copied          INT,
-    @bronze_path          VARCHAR(500)
+    @rows_processed       INT,
+    @data_path            VARCHAR(500)   -- 🔥 GENERIC (not bronze_path)
+)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -164,7 +120,7 @@ BEGIN
         WHERE source_system = @source_system
           AND source_table_name = @source_table;
 
-        -- If not exists → insert (FIRST RUN)
+        -- FIRST RUN → INSERT
         IF @old_watermark IS NULL
         BEGIN
             INSERT INTO ingestion_watermark (
@@ -175,7 +131,7 @@ BEGIN
                 last_run_status,
                 pipeline_name,
                 pipeline_run_id,
-                bronze_path,
+                data_path,
                 created_at,
                 updated_at
             )
@@ -187,29 +143,29 @@ BEGIN
                 'SUCCESS',
                 @pipeline_name,
                 @pipeline_run_id,
-                @bronze_path,
+                @data_path,
                 GETUTCDATE(),
                 GETUTCDATE()
             );
         END
         ELSE
         BEGIN
-            -- Update existing record
+            -- UPDATE existing
             UPDATE ingestion_watermark
             SET
                 last_watermark_value = @new_watermark_value,
                 last_run_status      = 'SUCCESS',
-                last_run_rows_copied = @rows_copied,
+                last_run_rows_processed = @rows_processed,
                 last_run_end_time    = GETUTCDATE(),
                 pipeline_name        = @pipeline_name,
                 pipeline_run_id      = @pipeline_run_id,
-                bronze_path          = @bronze_path,
+                data_path            = @data_path,
                 updated_at           = GETUTCDATE()
             WHERE source_system = @source_system
               AND source_table_name = @source_table;
         END
 
-        -- ✅ AUDIT LOG INSERT
+        -- 🔥 GENERIC AUDIT LOG
         INSERT INTO pipeline_audit_log (
             pipeline_name,
             pipeline_run_id,
@@ -225,13 +181,13 @@ BEGIN
         VALUES (
             @pipeline_name,
             @pipeline_run_id,
-            'bronze',
+            @layer_name,  -- 🔥 dynamic
             @source_table,
             @old_watermark,
             @new_watermark_value,
-            @rows_copied,
+            @rows_processed,
             'SUCCESS',
-            @bronze_path,
+            @data_path,
             GETUTCDATE()
         );
 
@@ -250,7 +206,7 @@ BEGIN
         VALUES (
             @pipeline_name,
             @pipeline_run_id,
-            'bronze',
+            @layer_name,  -- 🔥 dynamic
             @source_table,
             'FAILED',
             ERROR_MESSAGE(),
@@ -264,96 +220,50 @@ GO
 
 
 
-
-
-
-
-CREATE OR ALTER PROCEDURE usp_update_ingestion_watermark
-    @source_system        VARCHAR(50),
-    @source_table         VARCHAR(100),
-    @new_watermark_value  DATETIME2,
-    @pipeline_name        VARCHAR(100),
-    @pipeline_run_id      VARCHAR(100),
-    @rows_copied          INT,
-    @bronze_path          VARCHAR(500)
+CREATE OR ALTER PROCEDURE usp_log_pipeline_execution
+(
+    @pipeline_name     VARCHAR(100),
+    @pipeline_run_id   VARCHAR(100),
+    @layer_name        VARCHAR(20),     -- 🔥 NEW
+    @source_table      VARCHAR(100),
+    @status            VARCHAR(20),
+    @rows_processed    INT,
+    @error_message     VARCHAR(MAX),
+    @data_path         VARCHAR(500)     -- 🔥 NEW
+)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    BEGIN TRY
-
-        DECLARE @old_watermark DATETIME2;
-
-        -- Get previous watermark
-        SELECT @old_watermark = last_watermark_value
-        FROM ingestion_watermark
-        WHERE source_system = @source_system
-          AND source_table_name = @source_table;
-
-        -- Update watermark
-        UPDATE ingestion_watermark
-        SET
-            last_watermark_value = @new_watermark_value,
-            last_run_status      = 'SUCCESS',
-            last_run_rows_copied = @rows_copied,
-            last_run_end_time    = GETUTCDATE(),
-            pipeline_name        = @pipeline_name,
-            pipeline_run_id      = @pipeline_run_id,
-            bronze_path          = @bronze_path,
-            updated_at           = GETUTCDATE()
-        WHERE source_system = @source_system
-          AND source_table_name = @source_table;
-
-        -- Insert audit log
-        INSERT INTO pipeline_audit_log (
-            pipeline_name,
-            pipeline_run_id,
-            layer_name,
-            source_table,
-            watermark_start,
-            watermark_end,
-            rows_processed,
-            status,
-            data_path,
-            run_end_time
-        )
-        VALUES (
-            @pipeline_name,
-            @pipeline_run_id,
-            'bronze',
-            @source_table,
-            @old_watermark,
-            @new_watermark_value,
-            @rows_copied,
-            'SUCCESS',
-            @bronze_path,
-            GETUTCDATE()
-        );
-
-    END TRY
-    BEGIN CATCH
-
-        INSERT INTO pipeline_audit_log (
-            pipeline_name,
-            pipeline_run_id,
-            layer_name,
-            source_table,
-            status,
-            error_message,
-            run_end_time
-        )
-        VALUES (
-            @pipeline_name,
-            @pipeline_run_id,
-            'bronze',
-            @source_table,
-            'FAILED',
-            ERROR_MESSAGE(),
-            GETUTCDATE()
-        );
-
-        THROW;
-
-    END CATCH
+    INSERT INTO pipeline_audit_log (
+        pipeline_name,
+        pipeline_run_id,
+        layer_name,
+        source_table,
+        rows_processed,
+        status,
+        error_message,
+        data_path,
+        run_end_time
+    )
+    VALUES (
+        @pipeline_name,
+        @pipeline_run_id,
+        @layer_name,
+        @source_table,
+        @rows_processed,
+        @status,
+        @error_message,
+        @data_path,
+        GETUTCDATE()
+    );
 END
 GO
+
+CREATE TABLE ingestion_validation_config (
+    source_table_name    VARCHAR(100),
+    min_expected_rows    INT,
+    allow_zero_load      BIT DEFAULT 0
+);
+INSERT INTO ingestion_validation_config
+VALUES ('taxi_trips', 1, 0);
