@@ -635,7 +635,7 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "SELECT COUNT(*) AS row_count\nfrom taxi_trips\nwhere updated_at > '@{activity('Lookup_watermark').output.firstRow}'",
+							"value": "SELECT COUNT(*) AS row_count\nfrom taxi_trips\nwhere updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
 							"type": "Expression"
 						}
 					},
