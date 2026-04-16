@@ -1,0 +1,233 @@
+{
+	"name": "Pl_master_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "run_bronze_pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "onprem_to_azure",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"bronze_path": {
+							"value": "@pipeline().parameters.bronze_path",
+							"type": "Expression"
+						},
+						"layer_name": {
+							"value": "@pipeline().parameters.silver_path",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "run_silver_pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "run_bronze_pipeline",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_silver_transform",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"bronze_path": {
+							"value": "@pipeline().parameters.bronze_path",
+							"type": "Expression"
+						},
+						"silver_path": {
+							"value": "@pipeline().parameters.silver_path",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "SP_failure_bronze",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "run_bronze_pipeline",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+					"storedProcedureParameters": {
+						"data_path": {
+							"value": {
+								"value": "@pipeline().parameters.bronze_path",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"error_message": {
+							"value": {
+								"value": "@activity('run_bronze_pipeline').error.message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"layer_name": {
+							"value": "bronze",
+							"type": "String"
+						},
+						"pipeline_name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"pipeline_run_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"rows_processed": {
+							"value": "0",
+							"type": "Int32"
+						},
+						"source_table": {
+							"value": {
+								"value": "@pipeline().parameters.source_Table",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"status": {
+							"value": "FAILED",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "SP_failure_bronze_copy1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "run_silver_pipeline",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+					"storedProcedureParameters": {
+						"data_path": {
+							"value": {
+								"value": "@pipeline().parameters.silver_path",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"error_message": {
+							"value": {
+								"value": "@activity('run_silver_pipeline').error.message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"layer_name": {
+							"value": "silver",
+							"type": "String"
+						},
+						"pipeline_name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"pipeline_run_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"rows_processed": {
+							"value": "0",
+							"type": "Int32"
+						},
+						"source_table": {
+							"value": {
+								"value": "@pipeline().parameters.source_Table",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"status": {
+							"value": "FAILED",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"source_Table": {
+				"type": "string",
+				"defaultValue": "taxi_trips"
+			},
+			"bronze_path": {
+				"type": "string",
+				"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
+			},
+			"silver_path": {
+				"type": "string",
+				"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/"
+			}
+		},
+		"annotations": []
+	}
+}

@@ -5,7 +5,14 @@
 			{
 				"name": "silver_layer_transformation",
 				"type": "DatabricksNotebook",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Lookup_Silver_Watermark",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -26,7 +33,7 @@
 							"type": "Expression"
 						},
 						"last_watermark": {
-							"value": "@pipeline().parameters.last_watermark",
+							"value": "@coalesce(activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value, '1900-01-01')",
 							"type": "Expression"
 						}
 					}
@@ -67,13 +74,10 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"storedProcedureName": "[dbo].[usp_update_ingestion_watermark]",
+								"storedProcedureName": "[dbo].[usp_update_transformation_watermark]",
 								"storedProcedureParameters": {
 									"data_path": {
-										"value": {
-											"value": "@pipeline().parameters.silver_path",
-											"type": "Expression"
-										},
+										"value": "@pipeline().parameters.silver_path",
 										"type": "String"
 									},
 									"layer_name": {
@@ -82,37 +86,31 @@
 									},
 									"new_watermark_value": {
 										"value": {
-											"value": "@json(activity('silver_layer_transformation').output.runOutput).max_watermark",
+											"value": "@activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value",
 											"type": "Expression"
 										},
 										"type": "DateTime"
 									},
 									"pipeline_name": {
-										"value": {
-											"value": "@pipeline().Pipeline",
-											"type": "Expression"
-										},
+										"value": "@pipeline().parameters.silver_path",
 										"type": "String"
 									},
 									"pipeline_run_id": {
-										"value": {
-											"value": "@pipeline().RunId",
-											"type": "Expression"
-										},
+										"value": "@pipeline().RunId",
 										"type": "String"
 									},
 									"rows_processed": {
 										"value": {
-											"value": "@json(activity('silver_layer_transformation').output.runOutput).rows_processed",
+											"value": "@activity('silver_layer_transformation').output.runOutput.rows_processed",
 											"type": "Expression"
 										},
 										"type": "Int32"
 									},
-									"source_system": {
-										"value": "bronze",
+									"source_table": {
+										"value": "taxi_trips",
 										"type": "String"
 									},
-									"source_table": {
+									"target_table": {
 										"value": "taxi_trips",
 										"type": "String"
 									}
@@ -190,6 +188,34 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "Lookup_Silver_Watermark",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "SELECT last_watermark_value FROM transformation_watermark\nWHERE layer_name= 'silver'\nAND target_table_name = 'taxi_trips'",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AzureSqlTableforwatermark_ds",
+						"type": "DatasetReference"
+					}
+				}
 			}
 		],
 		"parameters": {
@@ -200,10 +226,6 @@
 			"silver_path": {
 				"type": "string",
 				"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/"
-			},
-			"last_watermark": {
-				"type": "string",
-				"defaultValue": "2024-01-01"
 			}
 		},
 		"annotations": []
