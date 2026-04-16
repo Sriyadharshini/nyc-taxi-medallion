@@ -309,7 +309,7 @@
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "Lookup_watermark",
+								"activity": "Get_Row_Count",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -731,6 +731,78 @@
 										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 										"type": "LinkedServiceReference"
 									}
+								},
+								{
+									"name": "SP_Success_log",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_log_pipeline_execution]",
+										"storedProcedureParameters": {
+											"data_path": {
+												"value": "",
+												"type": "String"
+											},
+											"error_message": {
+												"value": "",
+												"type": "String"
+											},
+											"layer_name": {
+												"value": {
+													"value": "@pipeline().parameters.layer_name",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_name": {
+												"value": {
+													"value": "@pipeline().Pipeline",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"rows_processed": {
+												"value": {
+													"value": "@activity('Copying data from mysql to Azure').output",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"source_table": {
+												"value": {
+													"value": "taxi_trips",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"status": {
+												"value": {
+													"value": "SUCCESS",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+										"type": "LinkedServiceReference"
+									}
 								}
 							],
 							"ifTrueActivities": [
@@ -839,84 +911,84 @@
 										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 										"type": "LinkedServiceReference"
 									}
+								},
+								{
+									"name": "Copy_activity_failure",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Ingestion_SP",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_log_pipeline_execution]",
+										"storedProcedureParameters": {
+											"data_path": {
+												"value": {
+													"value": "@pipeline().parameters.bronze_path",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"error_message": {
+												"value": {
+													"value": "@activity('Copying data from mysql to Azure').error.message",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"layer_name": {
+												"value": {
+													"value": "@pipeline().parameters.layer_name",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_name": {
+												"value": {
+													"value": "@pipeline().Pipeline",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"rows_processed": {
+												"value": "0",
+												"type": "Int32"
+											},
+											"source_table": {
+												"value": "taxi_trips",
+												"type": "String"
+											},
+											"status": {
+												"value": "FAILED",
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+										"type": "LinkedServiceReference"
+									}
 								}
 							]
-						}
-					},
-					{
-						"name": "Copy_activity_failure",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [
-							{
-								"activity": "Copying data from mysql to Azure",
-								"dependencyConditions": [
-									"Failed"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"storedProcedureName": "[[dbo].[usp_log_pipeline_execution]",
-							"storedProcedureParameters": {
-								"data_path": {
-									"value": {
-										"value": "@pipeline().parameters.bronze_path",
-										"type": "Expression"
-									},
-									"type": "String"
-								},
-								"error_message": {
-									"value": {
-										"value": "@activity('Copying data from mysql to Azure').error.message",
-										"type": "Expression"
-									},
-									"type": "String"
-								},
-								"layer_name": {
-									"value": {
-										"value": "@pipeline().parameters.layer_name",
-										"type": "Expression"
-									},
-									"type": "String"
-								},
-								"pipeline_name": {
-									"value": {
-										"value": "@pipeline().Pipeline",
-										"type": "Expression"
-									},
-									"type": "String"
-								},
-								"pipeline_run_id": {
-									"value": {
-										"value": "@pipeline().RunId",
-										"type": "Expression"
-									},
-									"type": "String"
-								},
-								"rows_processed": {
-									"value": "0",
-									"type": "Int32"
-								},
-								"source_table": {
-									"value": "taxi_trips",
-									"type": "String"
-								},
-								"status": {
-									"value": "FAILED",
-									"type": "String"
-								}
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "AzureSqlDatabasesourcewatermark_ls",
-							"type": "LinkedServiceReference"
 						}
 					},
 					{
@@ -924,9 +996,9 @@
 						"type": "WebActivity",
 						"dependsOn": [
 							{
-								"activity": "Copy_activity_failure",
+								"activity": "Copying data from mysql to Azure",
 								"dependencyConditions": [
-									"Completed"
+									"Failed"
 								]
 							}
 						],
@@ -945,6 +1017,40 @@
 							"body": {
 								"value": "\n{\n  \"pipeline_name\": \"pl_mysql_to_bronze\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"Validation failed - low row count\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
 								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Get_Row_Count",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Lookup_watermark",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "MySqlSource",
+								"query": {
+									"value": "SELECT COUNT(*) AS row_count\nfrom taxi_trips\nwhere updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
+									"type": "Expression"
+								}
+							},
+							"dataset": {
+								"referenceName": "Source_ds_mysql",
+								"type": "DatasetReference",
+								"parameters": {}
 							}
 						}
 					}
@@ -998,7 +1104,7 @@
 						],
 						"policy": {
 							"timeout": "0.12:00:00",
-							"retry": 0,
+							"retry": 2,
 							"retryIntervalInSeconds": 30,
 							"secureOutput": false,
 							"secureInput": false
