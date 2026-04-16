@@ -15,7 +15,7 @@
 				],
 				"policy": {
 					"timeout": "0.12:00:00",
-					"retry": 0,
+					"retry": 2,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
@@ -77,7 +77,10 @@
 								"storedProcedureName": "[dbo].[usp_update_transformation_watermark]",
 								"storedProcedureParameters": {
 									"data_path": {
-										"value": "@pipeline().parameters.silver_path",
+										"value": {
+											"value": "@pipeline().parameters.silver_path",
+											"type": "Expression"
+										},
 										"type": "String"
 									},
 									"layer_name": {
@@ -92,11 +95,17 @@
 										"type": "DateTime"
 									},
 									"pipeline_name": {
-										"value": "@pipeline().parameters.silver_path",
+										"value": {
+											"value": "@pipeline().parameters.silver_path",
+											"type": "Expression"
+										},
 										"type": "String"
 									},
 									"pipeline_run_id": {
-										"value": "@pipeline().RunId",
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
 										"type": "String"
 									},
 									"rows_processed": {
