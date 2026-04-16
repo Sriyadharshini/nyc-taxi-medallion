@@ -920,28 +920,6 @@
 						}
 					},
 					{
-						"name": "Web_activity_email_Trigger_failure",
-						"type": "WebActivity",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"method": "POST",
-							"headers": {},
-							"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
-							"body": {
-								"value": "\n{\n  \"pipeline_name\": \"pl_mysql_to_bronze\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"Validation failed - low row count\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
-								"type": "Expression"
-							}
-						}
-					},
-					{
 						"name": "Get_Row_Count",
 						"type": "Lookup",
 						"dependsOn": [
@@ -1474,6 +1452,35 @@
 						"linkedServiceName": {
 							"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Web_activity_email_Trigger_failure",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "SP_failure_bronze",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
+							"body": {
+								"value": "\n{\n  \"pipeline_name\": \"@{pipeline().Pipeline}\",\n  \"table_name\": \"taxi_trips\",\n  \"error_message\": \"@{activity('run_bronze_pipeline').error.message}\",\n  \"run_id\": \"@{pipeline().RunId}\"\n}",
+								"type": "Expression"
+							}
 						}
 					}
 				],
