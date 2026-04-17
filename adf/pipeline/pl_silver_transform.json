@@ -185,7 +185,7 @@
 										"type": "String"
 									},
 									"status": {
-										"value": "SUCCESS",
+										"value": "NO_DATA",
 										"type": "String"
 									}
 								}
