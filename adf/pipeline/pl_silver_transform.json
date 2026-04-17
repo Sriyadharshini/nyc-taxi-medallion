@@ -33,7 +33,7 @@
 							"type": "Expression"
 						},
 						"last_watermark": {
-							"value": "@coalesce(activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value, '1900-01-01')",
+							"value": "@coalesce(\n    activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value,\n    '1900-01-01'\n)",
 							"type": "Expression"
 						}
 					}
