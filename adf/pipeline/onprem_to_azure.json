@@ -355,7 +355,7 @@
 								"source": {
 									"type": "MySqlSource",
 									"query": {
-										"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow}'",
+										"value": "SELECT * FROM taxi_trips\nWHERE updated_at > '@{activity('Lookup_watermark').output.firstRow.last_watermark_value}'",
 										"type": "Expression"
 									}
 								},
