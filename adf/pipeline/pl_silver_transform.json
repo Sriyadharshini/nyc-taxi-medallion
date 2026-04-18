@@ -22,7 +22,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_trips_transformation",
+					"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_silver_transform",
 					"baseParameters": {
 						"bronze_path": {
 							"value": "@pipeline().parameters.bronze_path",
