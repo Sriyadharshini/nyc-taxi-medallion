@@ -89,14 +89,14 @@
 									},
 									"new_watermark_value": {
 										"value": {
-											"value": "@activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value",
+											"value": "@convertTimeZone(\n    json(activity('silver_layer_transformation').output.runOutput).max_watermark,\n    'UTC',\n    'UTC'\n)",
 											"type": "Expression"
 										},
 										"type": "DateTime"
 									},
 									"pipeline_name": {
 										"value": {
-											"value": "@pipeline().parameters.silver_path",
+											"value": "@pipeline().Pipeline",
 											"type": "Expression"
 										},
 										"type": "String"
