@@ -1021,7 +1021,7 @@
 									"type": "Expression"
 								},
 								"last_watermark": {
-									"value": "@coalesce(\n    activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value,\n    '1900-01-01'\n)",
+									"value": "@activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value",
 									"type": "Expression"
 								}
 							}
@@ -1202,7 +1202,7 @@
 							"source": {
 								"type": "AzureSqlSource",
 								"sqlReaderQuery": {
-									"value": "SELECT last_watermark_value FROM transformation_watermark\nWHERE layer_name= 'silver'\nAND target_table_name = 'taxi_trips'",
+									"value": "SELECT \n    ISNULL(MAX(last_watermark_value), '1900-01-01') AS last_watermark_value\nFROM transformation_watermark\nWHERE layer_name = 'silver'\nAND target_table_name = 'taxi_trips';",
 									"type": "Expression"
 								},
 								"queryTimeout": "02:00:00",
