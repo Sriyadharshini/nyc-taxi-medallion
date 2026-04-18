@@ -79,7 +79,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('Get_Row_Count').output.firstRow.row_count,0)",
+						"value": "@or(\n    and(\n        equals(activity('Lookup Config').output.firstRow.allow_zero_load, true),\n        greaterOrEquals(activity('Get_Row_Count').output.firstRow.row_count, 0)\n    ),\n    greaterOrEquals(\n        activity('Get_Row_Count').output.firstRow.row_count,\n        activity('Lookup Config').output.firstRow.min_expected_rows\n    )\n)",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
