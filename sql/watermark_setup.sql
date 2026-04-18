@@ -60,7 +60,7 @@ CREATE TABLE pipeline_audit_log (
 );
 END
 GO
-
+---seeds bronze ingestion watermark
 IF NOT EXISTS (
     SELECT 1 FROM ingestion_watermark 
     WHERE source_system = 'mysql' 
@@ -85,11 +85,6 @@ BEGIN
     );
 END
 
-CREATE TABLE ingestion_validation_config (
-    source_table_name    VARCHAR(100),
-    min_expected_rows    INT,
-    allow_zero_load      BIT DEFAULT 0
-);
 
 IF OBJECT_ID('ingestion_validation_config', 'U') IS NULL
 BEGIN
@@ -101,6 +96,9 @@ BEGIN
 END
 GO
 
+
+
+--- seeding  ingestion validation config for taxi_trips, can be extended to other tables and used in pipelines to validate data quality after ingestion
 IF NOT EXISTS (
     SELECT 1 FROM ingestion_validation_config
     WHERE source_table_name = 'taxi_trips'
@@ -151,6 +149,8 @@ ON transformation_watermark (layer_name, target_table_name);
 END
 GO
 
+--seeds silver transformation_watermark
+
 IF NOT EXISTS (
     SELECT 1 FROM transformation_watermark
     WHERE layer_name = 'silver'
@@ -176,6 +176,37 @@ BEGIN
         'INIT'
     );
 END
+
+
+--Seeding gold transformation watermark
+IF NOT EXISTS (
+    SELECT 1 FROM transformation_watermark
+    WHERE layer_name = 'gold'
+    AND target_table_name = 'taxi_trips'
+)
+BEGIN
+    INSERT INTO transformation_watermark (
+        layer_name,
+        source_layer,
+        source_table_name,
+        target_table_name,
+        watermark_column,
+        last_watermark_value,
+        last_run_status
+    )
+    VALUES (
+        'gold',
+        'silver',
+        'taxi_trips',
+        'taxi_trips',
+        'updated_at',
+        '1900-01-01 00:00:00',
+        'INIT'
+    );
+END
+
+
+
 -- =============================================
 -- usp_update_ingestion_watermark
 -- ONLY updates watermark table, NO audit log
