@@ -214,7 +214,7 @@
 					"source": {
 						"type": "AzureSqlSource",
 						"sqlReaderQuery": {
-							"value": "SELECT last_watermark_value FROM transformation_watermark\nWHERE layer_name= 'silver'\nAND target_table_name = 'taxi_trips'",
+							"value": "SELECT COALESCE(MAX(last_watermark), '1900-01-01' FROM transformation_watermark\nWHERE layer_name= 'silver'\nAND target_table_name = 'taxi_trips'",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
