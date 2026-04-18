@@ -1069,7 +1069,7 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_trips_transformation",
+							"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_silver_transform",
 							"baseParameters": {
 								"bronze_path": {
 									"value": "@pipeline().parameters.bronze_path",
@@ -1207,7 +1207,7 @@
 												"type": "String"
 											},
 											"error_message": {
-												"value": "",
+												"value": null,
 												"type": "String"
 											},
 											"layer_name": {
@@ -1610,6 +1610,57 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_gold_transform')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup_Gold_Watermark",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "SELECT last_watermark_value\nFROM transformation_watermark\nWHERE layer_name = 'gold'\nAND target_table_name = 'taxi_trips'",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlTableforwatermark_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"gold_path": {
+						"type": "string",
+						"defaultValue": "abfss://gold@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTableforwatermark_ds')]"
+			]
 		}
 	]
 }
