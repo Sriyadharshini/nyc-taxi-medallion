@@ -134,6 +134,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat('nyc_taxi/trips/year=', formatDateTime(utcNow(), 'yyyy'), '/month=', formatDateTime(utcNow(), 'MM'), '/day=', formatDateTime(utcNow(), 'dd'))",
+							"type": "Expression"
+						},
 						"fileSystem": "bronze"
 					},
 					"compressionCodec": "snappy"
@@ -383,7 +387,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"expression": {
-								"value": "@greater(activity('Get_Row_Count').output.firstRow.row_count,0)",
+								"value": "@or(\n    and(\n        equals(activity('Lookup Config').output.firstRow.allow_zero_load, true),\n        greaterOrEquals(activity('Get_Row_Count').output.firstRow.row_count, 0)\n    ),\n    greaterOrEquals(\n        activity('Get_Row_Count').output.firstRow.row_count,\n        activity('Lookup Config').output.firstRow.min_expected_rows\n    )\n)",
 								"type": "Expression"
 							},
 							"ifFalseActivities": [
@@ -415,7 +419,7 @@
 											},
 											"layer_name": {
 												"value": {
-													"value": "@pipeline().parameters.layer_name",
+													"value": "bronze",
 													"type": "Expression"
 												},
 												"type": "String"
@@ -520,7 +524,7 @@
 											},
 											"layer_name": {
 												"value": {
-													"value": "@pipeline().parameters.layer_name",
+													"value": "bronze",
 													"type": "Expression"
 												},
 												"type": "String"
@@ -603,7 +607,7 @@
 											},
 											"layer_name": {
 												"value": {
-													"value": "@pipeline().parameters.layer_name",
+													"value": "bronze",
 													"type": "Expression"
 												},
 												"type": "String"
@@ -961,10 +965,6 @@
 					"bronze_path": {
 						"type": "string",
 						"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
-					},
-					"layer_name": {
-						"type": "string",
-						"defaultValue": "bronze"
 					}
 				},
 				"variables": {
@@ -1010,7 +1010,7 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_silver_transform",
+							"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_trips_transformation",
 							"baseParameters": {
 								"bronze_path": {
 									"value": "@pipeline().parameters.bronze_path",
@@ -1077,14 +1077,14 @@
 											},
 											"new_watermark_value": {
 												"value": {
-													"value": "@activity('Lookup_Silver_Watermark').output.firstRow.last_watermark_value",
+													"value": "@convertTimeZone(\n    activity('silver_layer_transformation').output.runOutput.max_watermark,\n    'UTC',\n    'UTC'\n)",
 													"type": "Expression"
 												},
 												"type": "DateTime"
 											},
 											"pipeline_name": {
 												"value": {
-													"value": "@pipeline().parameters.silver_path",
+													"value": "@pipeline().Pipeline",
 													"type": "Expression"
 												},
 												"type": "String"
@@ -1147,7 +1147,7 @@
 												"type": "String"
 											},
 											"layer_name": {
-												"value": "Silver",
+												"value": "silver",
 												"type": "String"
 											},
 											"pipeline_name": {
@@ -1222,11 +1222,11 @@
 				"parameters": {
 					"bronze_path": {
 						"type": "string",
-						"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
+						"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
 					},
 					"silver_path": {
 						"type": "string",
-						"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/"
+						"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
 					}
 				},
 				"annotations": []
@@ -1523,11 +1523,11 @@
 					},
 					"bronze_path": {
 						"type": "string",
-						"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
+						"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
 					},
 					"silver_path": {
 						"type": "string",
-						"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/"
+						"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
 					}
 				},
 				"annotations": []
