@@ -160,7 +160,7 @@
 										"type": "String"
 									},
 									"error_message": {
-										"value": "",
+										"value": null,
 										"type": "String"
 									},
 									"layer_name": {
