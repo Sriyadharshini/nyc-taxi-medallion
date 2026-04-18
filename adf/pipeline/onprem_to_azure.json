@@ -18,7 +18,7 @@
 					"source": {
 						"type": "AzureSqlSource",
 						"sqlReaderQuery": {
-							"value": "SELECT * FROM ingestion_watermark\nWHERE source_table_name = 'taxi_trips'",
+							"value": "SELECT last_watermark_value \nFROM ingestion_watermark\nWHERE source_table_name = 'taxi_trips'",
 							"type": "Expression"
 						},
 						"queryTimeout": "02:00:00",
