@@ -159,7 +159,7 @@
 										"type": "String"
 									},
 									"layer_name": {
-										"value": "Silver",
+										"value": "silver",
 										"type": "String"
 									},
 									"pipeline_name": {

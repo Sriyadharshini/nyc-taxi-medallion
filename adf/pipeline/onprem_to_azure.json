@@ -215,7 +215,7 @@
 									},
 									"layer_name": {
 										"value": {
-											"value": "@pipeline().parameters.layer_name",
+											"value": "bronze",
 											"type": "Expression"
 										},
 										"type": "String"
@@ -650,10 +650,6 @@
 			"bronze_path": {
 				"type": "string",
 				"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
-			},
-			"layer_name": {
-				"type": "string",
-				"defaultValue": "bronze"
 			}
 		},
 		"variables": {
