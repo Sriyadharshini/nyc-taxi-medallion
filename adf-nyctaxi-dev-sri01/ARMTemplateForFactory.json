@@ -1176,6 +1176,79 @@
 										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
 										"type": "LinkedServiceReference"
 									}
+								},
+								{
+									"name": "SP_Silver_Success_Log",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "SP_Silver_Watermark_Update",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[usp_log_pipeline_execution]",
+										"storedProcedureParameters": {
+											"data_path": {
+												"value": {
+													"value": "@pipeline().parameters.silver_path",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"error_message": {
+												"value": "",
+												"type": "String"
+											},
+											"layer_name": {
+												"value": "silver",
+												"type": "String"
+											},
+											"pipeline_name": {
+												"value": {
+													"value": "@pipeline().Pipeline",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipeline_run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"rows_processed": {
+												"value": {
+													"value": "@activity('silver_layer_transformation').output.runOutput.rows_processed",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"source_table": {
+												"value": "taxi_trips",
+												"type": "String"
+											},
+											"status": {
+												"value": "SUCCESS",
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+										"type": "LinkedServiceReference"
+									}
 								}
 							],
 							"ifTrueActivities": [
