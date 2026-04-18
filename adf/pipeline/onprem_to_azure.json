@@ -111,7 +111,7 @@
 									},
 									"layer_name": {
 										"value": {
-											"value": "@pipeline().parameters.layer_name",
+											"value": "bronze",
 											"type": "Expression"
 										},
 										"type": "String"
