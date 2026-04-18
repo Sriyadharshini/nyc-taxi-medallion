@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"folderPath": "nyc_taxi/trips",
 				"fileSystem": "bronze"
 			},
 			"compressionCodec": "snappy"
