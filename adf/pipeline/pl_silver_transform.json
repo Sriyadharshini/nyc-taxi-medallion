@@ -89,7 +89,7 @@
 									},
 									"new_watermark_value": {
 										"value": {
-											"value": "@convertTimeZone(\n    json(activity('silver_layer_transformation').output.runOutput).max_watermark,\n    'UTC',\n    'UTC'\n)",
+											"value": "@convertTimeZone(\n    activity('silver_layer_transformation').output.runOutput.max_watermark,\n    'UTC',\n    'UTC'\n)",
 											"type": "Expression"
 										},
 										"type": "DateTime"
