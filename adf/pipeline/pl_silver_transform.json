@@ -230,11 +230,11 @@
 		"parameters": {
 			"bronze_path": {
 				"type": "string",
-				"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/"
+				"defaultValue": "abfss://bronze@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
 			},
 			"silver_path": {
 				"type": "string",
-				"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/"
+				"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
 			}
 		},
 		"annotations": []
