@@ -44,7 +44,7 @@
 				}
 			},
 			{
-				"name": "check _data_status",
+				"name": "check _silver_data_status",
 				"type": "IfCondition",
 				"dependsOn": [
 					{

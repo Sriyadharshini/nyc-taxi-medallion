@@ -31,9 +31,16 @@
 				}
 			},
 			{
-				"name": "Notebook1",
+				"name": "taxi_gold_transform",
 				"type": "DatabricksNotebook",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Lookup_Gold_Watermark",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -43,11 +50,265 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_gold_transform"
+					"notebookPath": "/Users/suryaravi2026@outlook.com/taxi_gold_transform",
+					"baseParameters": {
+						"gold_path": "abfss://gold@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/",
+						"last_watermark": "@activity('Lookup_Gold_Watermark').output.firstRow.last_watermark_value"
+					}
 				},
 				"linkedServiceName": {
 					"referenceName": "AzureDatabricks1",
 					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "check_gold_data_status",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "taxi_gold_transform",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('taxi_gold_transform').output.runOutput.status,'NO_DATA')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "SP_Gold_Ingestion_Watermark",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_update_transformation_watermark]",
+								"storedProcedureParameters": {
+									"data_path": {
+										"value": {
+											"value": "@pipeline().parameters.gold_path",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"layer_name": {
+										"value": "gold",
+										"type": "String"
+									},
+									"new_watermark_value": {
+										"value": {
+											"value": "@activity('taxi_gold_transform').output.runOutput.max_watermark",
+											"type": "Expression"
+										},
+										"type": "DateTime"
+									},
+									"pipeline_name": {
+										"value": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"pipeline_run_id": {
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"rows_processed": {
+										"value": {
+											"value": "@activity('taxi_gold_transform').output.runOutput.rows_processed",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"source_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									},
+									"target_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "SP_Gold_Success_Log",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "SP_Gold_Ingestion_Watermark",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+								"storedProcedureParameters": {
+									"data_path": {
+										"value": {
+											"value": "@pipeline().parameters.gold_path",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"error_message": {
+										"value": null,
+										"type": "String"
+									},
+									"layer_name": {
+										"value": "gold",
+										"type": "String"
+									},
+									"pipeline_name": {
+										"value": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"pipeline_run_id": {
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"rows_processed": {
+										"value": {
+											"value": "@activity('taxi_gold_transform').output.runOutput.rows_processed",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"source_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									},
+									"status": {
+										"value": "SUCCESS",
+										"type": "String"
+									},
+									"target_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									},
+									"watermark_end": {
+										"value": {
+											"value": "@activity('taxi_gold_transform').output.runOutput.max_watermark",
+											"type": "Expression"
+										},
+										"type": "DateTime"
+									},
+									"watermark_start": {
+										"value": {
+											"value": "@activity('Lookup_Gold_Watermark').output.firstRow.last_watermark_value",
+											"type": "Expression"
+										},
+										"type": "DateTime"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "SP_Godl_No_Data_Log",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+								"storedProcedureParameters": {
+									"data_path": {
+										"value": {
+											"value": "@pipeline().parameters.gold_path",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"error_message": {
+										"value": "No Incremental Data",
+										"type": "String"
+									},
+									"layer_name": {
+										"value": "gold",
+										"type": "String"
+									},
+									"pipeline_name": {
+										"value": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"pipeline_run_id": {
+										"value": {
+											"value": "@pipeline().RunId",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"rows_processed": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"source_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									},
+									"status": {
+										"value": "NO_DATA",
+										"type": "String"
+									},
+									"target_table": {
+										"value": "taxi_trips",
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
 				}
 			}
 		],

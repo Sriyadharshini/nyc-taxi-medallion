@@ -268,6 +268,133 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "run_gold_pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "run_silver_pipeline",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_gold_transform",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "SP_failure_gold",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "run_gold_pipeline",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[usp_log_pipeline_execution]",
+					"storedProcedureParameters": {
+						"data_path": {
+							"value": {
+								"value": "@pipeline().parameters.gold_path",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"error_message": {
+							"value": {
+								"value": "@activity('run_gold_pipeline').error.message",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"layer_name": {
+							"value": "gold",
+							"type": "String"
+						},
+						"pipeline_name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"pipeline_run_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"rows_processed": {
+							"value": "0",
+							"type": "Int32"
+						},
+						"source_table": {
+							"value": {
+								"value": "@pipeline().parameters.source_Table",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"status": {
+							"value": "FAILED",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabasesourcewatermark_ls",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Web_activity_email_Trigger_failure_copy1_copy1",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "SP_failure_gold",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-06.centralindia.logic.azure.com:443/workflows/1451aa8ee56544c4aee81dd812d69fa3/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=VX2QC6ngna6dH5tLrCRXpwyAu3l8SMoLb7bAKojeo2Y",
+					"body": {
+						"value": "@json(concat(\n'{',\n'\"pipeline_name\":\"', pipeline().Pipeline, '\",',\n'\"table_name\":\"taxi_trips\",',\n'\"error_message\":\"', \nreplace(replace(replace(string(coalesce(activity('run_silver_pipeline').error.message,'Unknown error')),'\"',''),'{',''),'}',''),\n'\",',\n'\"run_id\":\"', pipeline().RunId, '\"',\n'}'\n))",
+						"type": "Expression"
+					}
+				}
 			}
 		],
 		"parameters": {
@@ -282,6 +409,10 @@
 			"silver_path": {
 				"type": "string",
 				"defaultValue": "abfss://silver@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/trips/"
+			},
+			"gold_path": {
+				"type": "string",
+				"defaultValue": "abfss://gold@stnyctaxisri01.dfs.core.windows.net/nyc_taxi/"
 			}
 		},
 		"annotations": []
