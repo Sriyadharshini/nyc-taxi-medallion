@@ -75,7 +75,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@equals(activity('taxi_gold_transform').output.runOutput.status,'NO_DATA')",
+						"value": "@equals(activity('taxi_gold_transform').output.runOutput,'NO_DATA')",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
